@@ -9,13 +9,13 @@ seed = 0
 try:    
     scene_name = scenes[int(os.environ["SCENE_NUM"])]
 except KeyError:
-    scene_name = "cutting_deform"
+    scene_name = "cutting_SurgeDepth_GRN_10_percent_laplace"
 
 map_every = 1
 keyframe_every = 8
 # mapping_window_size = 24
-tracking_iters = 25
-mapping_iters = 25
+tracking_iters = 10
+mapping_iters = 1
 
 group_name = f"EndoNerf {scene_name}"
 run_name = scene_name
@@ -48,41 +48,38 @@ config = dict(
         end=-1,
         stride=1,
         num_frames=-1,
-        train_or_test="train",
+        train_or_test="all",
     ),
     tracking=dict(
         use_gt_poses=False, # Use GT Poses for Tracking
         forward_prop=True, # Forward Propagate Poses
         num_iters=tracking_iters,
         use_sil_for_loss=True,
-        sil_thres=0.9,
+        sil_thres=0.7,
         use_l1=True,
         ignore_outlier_depth_loss=False,
         loss_weights=dict(
-            im=0.5,
-            depth=1.0,
+            im=2.0,
+            depth=2.0,
             deform = 0.5
         ),
         lrs=dict(
-            means3D=0.0,
+            means3D=0.01,
             rgb_colors=0.0,
-            unnorm_rotations=0.0,
+            unnorm_rotations=0.001,
             logit_opacities=0.0,
-            log_scales=0.0,
+            log_scales=0.001,
             cam_unnorm_rots=0.0002,
-            cam_trans=0.0005,
-            deform_weights = 0.001,
-            deform_stds = 0.001,
-            deform_biases = 0.001,
+            cam_trans=0.00005,
         ),
     ),
     mapping=dict(
         perform_mapping = True,
         num_iters=mapping_iters,
         add_new_gaussians=True,
-        sil_thres=0.5, # For Addition of new Gaussians
+        sil_thres=0.9, # For Addition of new Gaussians
         use_l1=True,
-        use_sil_for_loss=False,
+        use_sil_for_loss=True,
         ignore_outlier_depth_loss=False,
         loss_weights=dict(
             im=1.0,
@@ -90,27 +87,25 @@ config = dict(
             deform = 0.5
         ),
         lrs=dict(
-            means3D=0.000,
-            rgb_colors=0.0025,
-            unnorm_rotations=0.00,
-            logit_opacities=0.05,
-            log_scales=0.000,
+            means3D=0.0000,
+            rgb_colors=0.000,
+            unnorm_rotations=0.0000,
+            logit_opacities=0.00,
+            log_scales=0.0000,
             cam_unnorm_rots=0.000,
             cam_trans=0.000,
-            deform_weights = 0.001,
-            deform_stds = 0.001,
-            deform_biases = 0.001,
         ),
-        prune_gaussians=False, # Prune Gaussians during Mapping
+        prune_gaussians=True, # Prune Gaussians during Mapping
         pruning_dict=dict( # Needs to be updated based on the number of mapping iterations
             start_after=0,
             remove_big_after=0,
-            stop_after=20,
-            prune_every=20,
-            removal_opacity_threshold=0.05,
-            final_removal_opacity_threshold=0.05,
+            stop_after=10000,
+            prune_every=1,
+            removal_opacity_threshold=0.1,
+            final_removal_opacity_threshold=0.1,
             reset_opacities=False,
             reset_opacities_every=int(1e10), # Doesn't consider iter 0
+            prune_size_thresh = 0.1
         ),
         use_gaussian_splatting_densification=False, # Use Gaussian Splatting-based Densification during Mapping
         densify_dict=dict( # Needs to be updated based on the number of mapping iterations
@@ -143,29 +138,45 @@ config = dict(
         model_size = 'vitb',
         normalization_means = [0.46888983, 0.29536288, 0.28712815], 
         normalization_stds = [0.24689102 ,0.21034359, 0.21188641],
-        shift_pred = 3.4345359019963704   ,
-        scale_pred = 0.9459655483121597 ,
-        shift_gt =   0.019956537514519056   ,
-        scale_gt =   0.0021386507684754996    ,
+        shift_pred = 2.0192598978494627   ,
+        scale_pred = 0.5414197885483871 ,
+        shift_gt =   0.016469928791720198   ,
+        scale_gt =   0.0034374421235340256    ,
     ), 
     deforms = dict(
         use_deformations = True,
-        nr_basis = 20,
+        deform_type = 'simple',
+        nr_basis = 50,
         use_distributed_biases = True,
-        total_timescale = 100
+        total_timescale = 50
     ),
     GRN = dict(
         use_grn = True,
-        model_path = 'GRN/models/GRN_v1.pth'
+        random_initialization = False,
+        init_scale = -1.0,
+        num_iters_initialization = 50,
+        num_iters_initialization_added_gaussians = 20,
+        sil_thres = 0.0,
+        model_path = 'GRN/models/GRN_v3.pth',
+        random_initialization_lrs = dict(
+            means3D=0.01,
+            rgb_colors=0.001,
+            unnorm_rotations=0.01,
+            logit_opacities=0.001,
+            log_scales=0.01,
+            cam_unnorm_rots=0.000,
+            cam_trans=0.0000,
+        ),
         # grn_hidden_dim = 128,
         # grn_out_dim = 3,
         # grn_input_dim = 3,
         # grn_num_heads = 4,
         # grn_use_norm = True,
-    )         
+    ),
     gaussian_reduction = dict(
         reduce_gaussians = True,
-        reduction_type = 'random',
-        reduction_fraction = 0.5
+        reduction_type = 'laplace',
+        reduction_fraction = 0.9
     )   
+
 )

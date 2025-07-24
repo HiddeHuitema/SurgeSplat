@@ -601,12 +601,12 @@ def get_loss(params, params_initial, curr_data, variables, iter_time_idx, loss_w
         transformed_pts = transform_to_frame(local_means,params, iter_time_idx,
                                              gaussians_grad=True,
                                              camera_grad=False)
-    bloat_params = False
+    bloat_params = True
     # print("We got to the loss calculation")
     if bloat_params: # For ablation study: add bloating parameters to computation graph to see effect on optimization time
         
         # bloat_test = torch.zeros_like(local_opacities,device='cuda')
-        bloat = torch.zeros(local_opacities.shape[0],1200,device='cuda')
+        bloat = torch.zeros(local_opacities.shape[0],100,device='cuda')
         bloat = torch.sum(bloat)
         # print(bloat.shape)
         local_opacities = local_opacities+bloat
